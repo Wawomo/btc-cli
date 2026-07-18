@@ -1,5 +1,2 @@
 /target
-./config.toml
-./Cargo.lock
-./Cargo.toml
-
+/config.toml
