@@ -2,16 +2,37 @@ use crate::error::AppError;
 use crate::rpc::RpcClient;
 use serde::Deserialize;
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Clone)]
 pub struct WalletInfo {
     pub walletname: String,
+    #[serde(default)]
     pub balance: f64,
+    #[serde(default)]
     pub unconfirmed_balance: f64,
     pub txcount: u64,
 }
 
 pub async fn info(client: &RpcClient) -> Result<WalletInfo, AppError> {
-    client.call("getwalletinfo", serde_json::json!([])).await
+    let mut w_info: WalletInfo = client.call("getwalletinfo", serde_json::json!([])).await?;
+    
+    // On newer Bitcoin Core versions (v21+), getwalletinfo does not return balance fields.
+    // In that case, they will default to 0.0. We query getbalances to fetch the actual balances.
+    #[derive(Deserialize)]
+    struct Balances {
+        mine: MineBalances,
+    }
+    #[derive(Deserialize)]
+    struct MineBalances {
+        trusted: f64,
+        untrusted_pending: f64,
+    }
+    
+    if let Ok(bal_resp) = client.call::<Balances>("getbalances", serde_json::json!([])).await {
+        w_info.balance = bal_resp.mine.trusted;
+        w_info.unconfirmed_balance = bal_resp.mine.untrusted_pending;
+    }
+    
+    Ok(w_info)
 }
 
 pub async fn balance(

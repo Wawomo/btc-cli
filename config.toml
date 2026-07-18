@@ -1,0 +1,9 @@
+rpc_url = "http://127.0.0.1:18443"
+rpc_user = "polaruser"
+rpc_password = "polarpass"
+wallet = "wallet1"
+
+# Additional Polar connection details
+p2p_host = "tcp://127.0.0.1:19444"
+zmq_block_host = "tcp://127.0.0.1:28334"
+zmq_transaction_host = "tcp://127.0.0.1:29335"
